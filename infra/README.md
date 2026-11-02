@@ -51,7 +51,7 @@ Set with `-c key=value` or in `cdk.json` → `context`:
 |---|---|---|
 | `cloudfrontPrefixListId` | `pl-3b927c52` (us-east-1) | Managed prefix list `com.amazonaws.global.cloudfront.origin-facing`; the ALB only accepts port 80 from it. Other regions: `aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing` |
 | `availabilityZones` | `<region>a,<region>b` | AZs for the VPC (avoids a credentialed lookup at synth) |
-| `domainName` + `certificateArn` | unset | Custom domain for CloudFront. The ACM cert must be in `us-east-1`. Both or neither. |
+| `domainNames` + `certificateArn` | unset | Comma-separated custom domains for CloudFront; the first is canonical (used for MEDIA_URL). The ACM cert must be in `us-east-1` and cover every name. Both or neither. |
 
 ## Bootstrap, synth, deploy
 

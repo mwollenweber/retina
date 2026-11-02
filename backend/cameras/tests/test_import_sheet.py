@@ -38,6 +38,7 @@ def fake_geocoder(monkeypatch):
         return None
 
     monkeypatch.setattr(import_sheet, "geocode", fake)
+    monkeypatch.setattr(import_sheet, "load_fixups", lambda path=None: {})  # keep the real data file out
     return calls
 
 
@@ -86,16 +87,15 @@ def test_import_creates_vetted_and_pending(tmp_path, fake_geocoder):
     assert abs(thirty.longitude - -90.0577) < 1e-6
 
     noted = cams["gsheet:4218-magazine-st"]
-    assert noted.status == CameraStatus.PENDING
-    assert noted.vetted_at is None
-    assert "not Project NOLA" in noted.reporter_notes
+    assert noted.status == CameraStatus.VETTED  # the sheet is the owner's data; notes don't veto
+    assert "not Project NOLA" in noted.admin_notes
     assert noted.host_business == "Theos / Theos magazine"
 
     assert cams["gsheet:610-tchoupitoulas-st"].host_business == "Kimberly A Meng DDS"
     corner = cams["gsheet:decatur-st-bienville-st"]
     assert corner.host_business == "(unnamed)"
-    assert corner.status == CameraStatus.PENDING  # Nominatim fallback hits need a human look
-    assert "nominatim" in corner.reporter_notes
+    assert corner.status == CameraStatus.VETTED
+    assert "nominatim" in corner.admin_notes  # fallback geocoder is recorded for review
     # "see MJW" and the address-less row were skipped and not geocoded.
     assert "see MJW" in " ".join(fake_geocoder)
     assert not Camera.objects.filter(host_business__contains="Back Lot").exists()
@@ -135,3 +135,15 @@ def test_census_rejects_out_of_bbox(monkeypatch, settings):
         },
     )
     assert geocode_mod.geocode_census("1 Market St") is None
+
+
+def test_fixups_replace_blank_or_bad_addresses(tmp_path):
+    fix = tmp_path / "fixups.csv"
+    fix.write_text("name,address,note\nCochon,930 Tchoupitoulas St,restaurant\nZeas,1525 St Charles Ave,\n")
+    fixups = import_sheet.load_fixups(fix)
+    rows = import_sheet.apply_fixups(import_sheet.read_rows(CSV), fixups)
+    by_name = {r["name"]: r for r in rows}
+    assert by_name["Zeas"]["address"] == "1525 St Charles Ave"
+    assert "sheet had 'see MJW'" in by_name["Zeas"]["notes"]
+    assert by_name["30/90"]["address"] == "520 Frenchmen St"  # untouched
+    assert import_sheet.load_fixups(tmp_path / "missing.csv") == {}

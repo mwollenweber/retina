@@ -89,6 +89,9 @@
     "@aws-cdk/core:aspectStabilization": true,
     "@aws-cdk/aws-dynamodb:retainTableReplica": true,
     "@aws-cdk/aws-stepfunctions:useDistributedMapResultWriterV2": true,
-    "@aws-cdk/s3-notifications:addS3TrailingSlash": true
+    "@aws-cdk/s3-notifications:addS3TrailingSlash": true,
+    "domainNames": "retina.perdidoinstitute.com,retina.perdidoinstitute.org",
+    "certificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000",
+    "sheetCsvUrl": "https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0"
   }
 }

@@ -7,11 +7,13 @@ Expected columns (header row, extra columns ignored):
 Each row is geocoded (Census, then Nominatim) and upserted as a camera with
 source=admin and a stable source_ref derived from the geocoder's canonical
 address, so
-re-running the command updates rather than duplicates. Rows with anything in
-Notes (the sheet uses it for "owner denies Project NOLA" caveats) land in the
-pending queue instead of being vetted, as do rows the Census geocoder missed
-and Nominatim resolved; rows without an address, or that neither geocoder can
-place, are reported and skipped.
+re-running the command updates rather than duplicates. The sheet is the
+owner's own field data, so every geocoded row is published (vetted). Anything
+in Notes (e.g. "owner denies Project NOLA") and the geocoder used are kept in
+admin_notes for review in the admin; --pending holds everything back instead.
+Rows without an address, or that neither geocoder can place, are reported and
+skipped, unless cameras/data/sheet_fixups.csv supplies an address for that
+row's name (looked up by hand so the sheet itself is left alone).
 
 Usage:
     manage.py import_sheet --url 'https://docs.google.com/spreadsheets/d/<id>/export?format=csv&gid=0'
@@ -23,6 +25,7 @@ import io
 import re
 import urllib.request
 from collections import OrderedDict
+from pathlib import Path
 
 from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand, CommandError
@@ -32,9 +35,38 @@ from cameras.geocode import USER_AGENT, geocode, normalize_address
 from cameras.models import Camera, CameraSource, CameraStatus, CameraType
 from cameras.publish import publish
 
+FIXUPS_PATH = Path(__file__).resolve().parents[2] / "data" / "sheet_fixups.csv"
+
 
 def slugify(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
+
+
+def load_fixups(path: Path = FIXUPS_PATH) -> dict[str, dict]:
+    """name-slug -> {address, note}: addresses we looked up for rows the sheet left blank."""
+    if not path.exists():
+        return {}
+    with path.open(encoding="utf-8-sig") as fh:
+        return {
+            slugify(r["name"]): {"address": r["address"].strip(), "note": (r.get("note") or "").strip()}
+            for r in csv.DictReader(fh)
+            if r.get("name") and r.get("address")
+        }
+
+
+def apply_fixups(rows: list[dict], fixups: dict[str, dict]) -> list[dict]:
+    """Replace a row's address with the fixup for its name. The original stays in notes."""
+    for r in rows:
+        fix = fixups.get(slugify(r["name"]))
+        if not fix:
+            continue
+        original = r["address"]
+        r["address"] = fix["address"]
+        extra = f"Address from sheet_fixups.csv (sheet had {original!r})"
+        if fix["note"]:
+            extra += f": {fix['note']}"
+        r["notes"] = f"{r['notes']}; {extra}" if r["notes"] else extra
+    return rows
 
 
 def read_rows(text: str) -> list[dict]:
@@ -87,7 +119,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         text = self._load(opts)
-        rows = read_rows(text)
+        rows = apply_fixups(read_rows(text), load_fixups())
         groups = group_by_address(rows)
         self.stdout.write(f"{len(rows)} rows, {len(groups)} distinct addresses")
 
@@ -120,8 +152,8 @@ class Command(BaseCommand):
             label = " / ".join(r["names"]) or "(unnamed)"
             notes = list(r["notes"])
             if hit.geocoder != "census":
-                notes.append(f"Location from {hit.geocoder} fallback geocoder; verify before approving")
-            is_pending = opts["pending"] or bool(notes)
+                notes.append(f"Location from {hit.geocoder} fallback geocoder; worth a Street View check")
+            is_pending = opts["pending"]
             status = CameraStatus.PENDING if is_pending else CameraStatus.VETTED
             note_text = "; ".join(notes)
             self.stdout.write(
@@ -140,10 +172,10 @@ class Command(BaseCommand):
                 street_address=hit.matched_address[:255],
                 status=status,
                 vetted_at=None if is_pending else now,
-                reporter_notes=note_text,
                 admin_notes=(
                     f"Imported from spreadsheet rows {r['rows']}; "
                     f"geocoded {r['addresses']!r} with {hit.geocoder}."
+                    + (f" Sheet notes: {note_text}" if note_text else "")
                 ),
             )
             _, was_created = Camera.objects.update_or_create(
