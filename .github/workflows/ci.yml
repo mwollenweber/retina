@@ -55,9 +55,6 @@ jobs:
       - run: pip install -r infra/requirements.txt
       - run: npx --yes aws-cdk@2 synth --quiet
         working-directory: infra
-        env:
-          CDK_DEFAULT_ACCOUNT: "123456789012"
-          CDK_DEFAULT_REGION: us-east-1
 
   docker:
     runs-on: ubuntu-latest

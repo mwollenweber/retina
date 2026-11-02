@@ -133,3 +133,10 @@ def test_report_rejects_non_image(client):
 def test_healthz(client):
     r = client.get("/healthz/")
     assert r.status_code == 200 and r.json()["db"] == "ok"
+
+
+@pytest.mark.django_db
+def test_healthz_ignores_host_header(client, settings):
+    settings.ALLOWED_HOSTS = ["example.com"]
+    assert client.get("/healthz/", HTTP_HOST="10.0.1.23:8000").status_code == 200
+    assert client.get("/api/cameras/", HTTP_HOST="10.0.1.23:8000").status_code == 400

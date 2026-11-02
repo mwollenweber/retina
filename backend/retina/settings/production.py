@@ -17,6 +17,8 @@ if AWS_STORAGE_BUCKET_NAME:
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
             "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            # CloudFront forwards the full /media/<key> path to the bucket.
+            "location": "media",
             "default_acl": None,
             "querystring_auth": False,
             "file_overwrite": False,
