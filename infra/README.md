@@ -104,6 +104,13 @@ The first migration runs `CREATE EXTENSION postgis` (RDS ships PostGIS; the
 `retina` master user may create extensions). Follow the task in CloudWatch
 Logs (`LogGroupName` output) or `aws ecs describe-tasks`.
 
+## Re-import the Project NOLA spreadsheet
+
+`scripts/import-sheet.sh` wraps the run-task recipe above for
+`manage.py import_sheet --publish` and prints the task's log. Pass
+`--dry-run` to geocode and report without writing. Set `SHEET_URL` to point
+at a different CSV export.
+
 ## Create the admin superuser
 
 Same pattern, with `DJANGO_SUPERUSER_*` env overrides:
