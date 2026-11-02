@@ -5,7 +5,7 @@
     project_nola: { label: "Project NOLA", color: "#c0392b" },
     nopd: { label: "NOPD / RTCC", color: "#2c5aa0" },
     traffic: { label: "City traffic", color: "#e67e22" },
-    alpr: { label: "License plate reader", color: "#8e44ad" },
+    alpr: { label: "Flock/ALPR", color: "#8e44ad" },
     private: { label: "Private", color: "#16a085" },
     unknown: { label: "Unknown", color: "#7f8c8d" },
   };
