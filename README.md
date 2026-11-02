@@ -1,7 +1,8 @@
 # Retina
 
-A self-hosted, interactive map of surveillance cameras in New Orleans, with a focus on
-Project NOLA. Cameras are collected in the field by the public, reviewed by an admin with
+A project of the [Perdido Institute](https://perdidoinstitute.com): a self-hosted,
+interactive map of surveillance cameras in New Orleans, with a focus on Project NOLA.
+Contact: retina@perdidoinstitute.com. Cameras are collected in the field by the public, reviewed by an admin with
 photos, and published to a static map. Scheduled jobs pull official city traffic cameras and
 OpenStreetMap data, and can push field-verified cameras back to OpenStreetMap.
 
