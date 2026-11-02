@@ -1,0 +1,6 @@
+# Runtime deps for the Lambdas (Python 3.13, arm64).
+# boto3 is provided by the Lambda runtime; it is pinned here for local runs and
+# build.sh strips it from the zips (see build.sh).
+psycopg[binary]==3.3.6
+requests==2.34.2
+boto3==1.43.123

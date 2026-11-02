@@ -1,0 +1,42 @@
+# Local development: PostGIS + Django. The static frontend is served separately
+# (see frontend/README.md) and talks to http://localhost:8000.
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: retina
+      POSTGRES_USER: retina
+      POSTGRES_PASSWORD: retina
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retina"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: retina.settings.development
+      DJANGO_SECRET_KEY: dev-only
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: retina
+      DB_USER: retina
+      DB_PASSWORD: retina
+      LOCAL_GEOJSON_PATH: /frontend-data/cameras.geojson
+    volumes:
+      - ./backend:/app
+      - ./frontend/data:/frontend-data
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

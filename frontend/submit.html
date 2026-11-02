@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Report a camera</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+    #pick { height: 300px; border: 1px solid var(--border); border-radius: 8px; margin: 8px 0; }
+    form label { display: block; margin: 12px 0 4px; font-weight: 600; }
+    form input[type=text], form input[type=email], form select, form textarea { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font: inherit; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hint { color: var(--muted); font-size: 13px; }
+    .photo-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 6px; align-items: center; }
+    .msg { padding: 12px; border-radius: 8px; margin: 12px 0; }
+    .msg.ok { background: #e8f5e9; color: #1b5e20; }
+    .msg.err { background: #fdecea; color: #b71c1c; }
+    .hp { position: absolute; left: -9999px; }
+    #map { position: static; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1><a href="index.html" style="color:inherit;text-decoration:none">Retina</a> <span class="sub">Report a camera</span></h1>
+    <nav><a href="index.html" class="btn">Back to map</a></nav>
+  </header>
+  <main class="wrap">
+    <p>Spotted a camera? Drop a pin, add a photo if you can, and submit. Reports are reviewed by a person before they appear on the map. Nothing you enter about yourself is published.</p>
+    <p class="hint">Project NOLA cameras are usually larger than typical business cameras, often on a pan-tilt mount, sometimes with a Project NOLA sticker or sign on the host business. A photo of the camera plus one of the surroundings helps reviewers confirm it.</p>
+
+    <div id="result"></div>
+
+    <form id="form" enctype="multipart/form-data" novalidate>
+      <label>Location <span class="hint">(tap the map, or use your location)</span></label>
+      <div id="pick"></div>
+      <div class="row">
+        <div><input type="text" name="lat" id="lat" placeholder="Latitude" inputmode="decimal"></div>
+        <div><input type="text" name="lng" id="lng" placeholder="Longitude" inputmode="decimal"></div>
+      </div>
+      <button type="button" class="btn" id="locate" style="margin-top:6px">Use my location</button>
+
+      <label for="camera_type">Camera type</label>
+      <select name="camera_type" id="camera_type">
+        <option value="project_nola">Project NOLA</option>
+        <option value="nopd">NOPD / RTCC</option>
+        <option value="alpr">License plate reader</option>
+        <option value="traffic">City traffic</option>
+        <option value="private">Private</option>
+        <option value="unknown">Not sure</option>
+      </select>
+
+      <label for="host_business">Host business or building</label>
+      <input type="text" name="host_business" id="host_business" placeholder="e.g. Corner Market">
+      <div class="row">
+        <div><label for="cross_street">Nearest intersection</label><input type="text" name="cross_street" id="cross_street" placeholder="Canal St & Bourbon St"></div>
+        <div><label for="street_address">Street address</label><input type="text" name="street_address" id="street_address" placeholder="123 Main St"></div>
+      </div>
+
+      <div class="row">
+        <div><label for="mount">Mounted on</label>
+          <select name="mount" id="mount"><option value="">Not sure</option><option value="pole">Pole</option><option value="building">Building</option><option value="traffic_signal">Traffic signal</option><option value="other">Other</option></select></div>
+        <div><label for="direction">Facing (degrees, optional)</label><input type="text" name="direction" id="direction" inputmode="numeric" placeholder="0-359"></div>
+      </div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" name="facial_recognition" id="facial_recognition" value="true"> I believe this camera has facial recognition</label>
+
+      <label>Photos <span class="hint">(up to 4; location data is stripped from the file before storage)</span></label>
+      <div id="photos"></div>
+      <button type="button" class="btn" id="add-photo">Add photo</button>
+
+      <label for="reporter_notes">Notes</label>
+      <textarea name="reporter_notes" id="reporter_notes" rows="3" placeholder="Anything that helps a reviewer confirm this"></textarea>
+      <label for="reporter_contact">Your email <span class="hint">(optional, only so we can follow up; never published)</span></label>
+      <input type="email" name="reporter_contact" id="reporter_contact">
+      <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off">
+
+      <p><button type="submit" class="btn primary" id="submit">Submit report</button></p>
+    </form>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.6.0/maplibre-gl.min.js"></script>
+  <script src="config.js"></script>
+  <script>
+  (function () {
+    const CFG = window.RETINA_CONFIG;
+    const qs = new URLSearchParams(location.search);
+    const latEl = document.getElementById("lat"), lngEl = document.getElementById("lng");
+    const result = document.getElementById("result");
+    let marker = null;
+
+    const map = new maplibregl.Map({ container: "pick", style: CFG.BASEMAP_STYLE, center: CFG.CENTER, zoom: 12, minZoom: CFG.MIN_ZOOM, maxBounds: CFG.MAX_BOUNDS, attributionControl: { compact: true } });
+    map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
+
+    function setPoint(lng, lat, fly) {
+      latEl.value = lat.toFixed(6); lngEl.value = lng.toFixed(6);
+      if (!marker) marker = new maplibregl.Marker({ color: "#c0392b", draggable: true }).setLngLat([lng, lat]).addTo(map);
+      else marker.setLngLat([lng, lat]);
+      marker.on("dragend", () => { const p = marker.getLngLat(); latEl.value = p.lat.toFixed(6); lngEl.value = p.lng.toFixed(6); });
+      if (fly) map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 16) });
+    }
+    map.on("click", (e) => setPoint(e.lngLat.lng, e.lngLat.lat, false));
+    [latEl, lngEl].forEach((el) => el.addEventListener("change", () => {
+      const la = parseFloat(latEl.value), lo = parseFloat(lngEl.value);
+      if (!isNaN(la) && !isNaN(lo)) setPoint(lo, la, true);
+    }));
+    document.getElementById("locate").addEventListener("click", () => {
+      if (!navigator.geolocation) return alert("Geolocation not available");
+      navigator.geolocation.getCurrentPosition((pos) => setPoint(pos.coords.longitude, pos.coords.latitude, true), () => alert("Could not get your location"), { enableHighAccuracy: true, timeout: 10000 });
+    });
+    if (qs.get("lat") && qs.get("lng")) {
+      map.on("load", () => setPoint(parseFloat(qs.get("lng")), parseFloat(qs.get("lat")), true));
+      if (qs.get("correction")) document.getElementById("reporter_notes").value = "Correction for camera " + qs.get("correction") + ": ";
+    }
+
+    // photo rows
+    const photosEl = document.getElementById("photos");
+    function addPhotoRow() {
+      if (photosEl.children.length >= 4) return;
+      const row = document.createElement("div");
+      row.className = "photo-row";
+      row.innerHTML = '<input type="file" name="photos" accept="image/*" capture="environment"><select name="photo_types"><option value="close_up">Close up</option><option value="surrounding">Surroundings</option><option value="signage">Signage</option></select>';
+      photosEl.appendChild(row);
+    }
+    document.getElementById("add-photo").addEventListener("click", addPhotoRow);
+    addPhotoRow();
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submit");
+      btn.disabled = true; btn.textContent = "Sending...";
+      result.innerHTML = "";
+      const fd = new FormData(e.target);
+      // Drop empty file inputs and their paired type so indexes line up.
+      const files = fd.getAll("photos"), types = fd.getAll("photo_types");
+      fd.delete("photos"); fd.delete("photo_types");
+      files.forEach((f, i) => { if (f && f.size > 0) { fd.append("photos", f); fd.append("photo_types", types[i] || "close_up"); } });
+      if (!fd.get("direction")) fd.delete("direction");
+      if (!document.getElementById("facial_recognition").checked) fd.set("facial_recognition", "false");
+      try {
+        const r = await fetch((CFG.API_BASE || "") + "/api/reports/", { method: "POST", body: fd });
+        const body = await r.json().catch(() => ({}));
+        if (r.ok) {
+          result.innerHTML = '<div class="msg ok">Thanks. Your report is in the review queue' + (body.photos ? " with " + body.photos + " photo(s)" : "") + ". It will appear on the map once a reviewer confirms it.</div>";
+          e.target.reset(); photosEl.innerHTML = ""; addPhotoRow(); if (marker) { marker.remove(); marker = null; }
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          const msg = typeof body === "object" ? Object.entries(body).map(([k, v]) => (k === "non_field_errors" ? "" : k + ": ") + [].concat(v).join(" ")).join("<br>") : "Submission failed.";
+          result.innerHTML = '<div class="msg err">' + (msg || "Submission failed.") + "</div>";
+        }
+      } catch (err) {
+        result.innerHTML = '<div class="msg err">Network error. Please try again.</div>';
+      } finally {
+        btn.disabled = false; btn.textContent = "Submit report";
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

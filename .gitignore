@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+
+# Django
+backend/media/
+backend/staticfiles/
+backend/*.sqlite3
+backend/*.sqlite3-journal
+backend/db.sqlite3*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# CDK
+infra/cdk.out/
+infra/.cdk.staging/
+infra/cdk.context.json
+
+# Lambda build artifacts
+lambdas/build/
+lambdas/*.zip
+
+# Node
+node_modules/
+
+# Frontend generated data
+frontend/data/*.geojson
+frontend/data/*.pmtiles
+
+# macOS
+.DS_Store
+.icloud
+*.icloud

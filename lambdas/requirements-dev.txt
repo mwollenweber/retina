@@ -1,0 +1,4 @@
+-r requirements.txt
+pytest==9.2.0
+requests-mock==1.12.1
+moto[s3]==5.2.5
