@@ -4,7 +4,7 @@ Everything Retina needs on AWS, as four CloudFormation stacks in one CDK app:
 
 | Stack | What's in it |
 |---|---|
-| `RetinaNetwork` | VPC (2 AZs; public / private / isolated subnets), a `t4g.nano` NAT **instance** (not a NAT Gateway), the internet-facing ALB and the shared security groups |
+| `RetinaNetwork` | VPC (2 AZs; public / private / isolated subnets), a `t4g.micro` NAT **instance** (not a NAT Gateway), the internet-facing ALB and the shared security groups |
 | `RetinaData` | RDS PostgreSQL 16 (`db.t4g.micro`, 20 GB gp3), S3 `media` + `site` buckets, CloudFront distribution (OAC to S3, `/api/*` etc. to the ALB) |
 | `RetinaJobs` | Scheduled Lambdas `sync_traffic`, `sync_osm`, `publish_geojson`, `push_osm`, the OSM token secret |
 | `RetinaApp` | Django on ECS Fargate (1 x 0.25 vCPU / 512 MB, arm64), task definition reused for `migrate` / `createsuperuser` |
@@ -178,13 +178,13 @@ aws secretsmanager put-secret-value --secret-id "$OSM_SECRET" --secret-string 'Y
 | ALB (hourly + minimal LCUs) | 17.5 |
 | RDS `db.t4g.micro` + 20 GB gp3 (+ backups within free allowance) | 14.0 |
 | Fargate 0.25 vCPU / 0.5 GB arm64, 1 task, 730 h | 7.2 |
-| NAT instance `t4g.nano` + 8 GB gp3 root | 3.7 |
+| NAT instance `t4g.micro` + 8 GB gp3 root (nano OOM-kills its own setup) | 6.9 |
 | Secrets Manager (3 secrets) | 1.2 |
 | CloudWatch Logs (1-month retention) | ~1 |
 | S3 (a few GB) + ECR image storage | ~1 |
 | Data transfer out of EC2/NAT | ~1 |
 | CloudFront (1 TB/mo free tier), Lambda (free tier), EventBridge | ~0 |
-| **Total** | **~46** |
+| **Total** | **~49** |
 
 The ALB is the single biggest fixed line; everything else is already at the
 cheapest practical tier. Switching the NAT instance for a NAT Gateway would add

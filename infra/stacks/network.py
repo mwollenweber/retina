@@ -37,15 +37,19 @@ class NetworkStack(Stack):
 
         # ------------------------------------------------------------------
         # VPC: 2 AZs, public / private-with-egress / isolated (DB) subnets.
-        # A single t4g.nano NAT *instance* (fck-nat style) instead of a NAT
+        # A single t4g.micro NAT *instance* (fck-nat style) instead of a NAT
         # Gateway: ~$3/mo vs ~$33/mo. Trade-off: single point of failure for
         # outbound traffic from private subnets and ~100 Mbps-ish throughput,
         # which is plenty for Django + a few cron Lambdas.
         # ------------------------------------------------------------------
         nat_provider = ec2.NatProvider.instance_v2(
-            instance_type=ec2.InstanceType("t4g.nano"),
-            machine_image=ec2.MachineImage.latest_amazon_linux2023(
-                cpu_type=ec2.AmazonLinuxCpuType.ARM_64
+            instance_type=ec2.InstanceType("t4g.micro"),
+            # AL2023 with the *current default* kernel (CDK's helper pins 6.1).
+            # Also: a changed ImageId replaces the instance, which is the only
+            # way its first-boot NAT setup (iptables) re-runs after a resize.
+            machine_image=ec2.MachineImage.from_ssm_parameter(
+                "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-arm64",
+                os=ec2.OperatingSystemType.LINUX,
             ),
             # Standard credits so a burst can't incur surplus-credit charges.
             credit_specification=ec2.CpuCredits.STANDARD,
