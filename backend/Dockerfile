@@ -3,7 +3,9 @@ FROM python:3.13-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# HTTPS mirrors: some networks block plain HTTP from build containers.
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && apt-get update && apt-get install -y --no-install-recommends \
         gdal-bin libgdal32 libgeos-c1v5 libproj25 binutils curl \
     && rm -rf /var/lib/apt/lists/*
 
