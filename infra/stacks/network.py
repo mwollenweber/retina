@@ -94,7 +94,7 @@ class NetworkStack(Stack):
             nat_provider.security_group.add_ingress_rule(
                 ec2.Peer.ipv4(subnet.ipv4_cidr_block),
                 ec2.Port.all_traffic(),
-                f"private subnet {subnet.node.id} -> NAT",
+                f"private subnet {subnet.node.id} to NAT",
             )
 
         # ------------------------------------------------------------------
@@ -119,7 +119,7 @@ class NetworkStack(Stack):
         self.alb_sg.add_ingress_rule(
             ec2.Peer.prefix_list(cf_prefix_list_id),
             ec2.Port.tcp(80),
-            "CloudFront origin-facing -> ALB HTTP",
+            "CloudFront origin-facing to ALB HTTP",
         )
 
         self.app_sg = ec2.SecurityGroup(
@@ -130,7 +130,7 @@ class NetworkStack(Stack):
             allow_all_outbound=True,
         )
         self.app_sg.add_ingress_rule(
-            self.alb_sg, ec2.Port.tcp(APP_PORT), "ALB -> Django"
+            self.alb_sg, ec2.Port.tcp(APP_PORT), "ALB to Django"
         )
 
         self.lambda_sg = ec2.SecurityGroup(

@@ -61,10 +61,10 @@ class DataStack(Stack):
 
         # Only the Django tasks and the Lambdas may talk to Postgres.
         self.db.connections.allow_from(
-            network.app_sg, ec2.Port.tcp(5432), "Fargate tasks -> Postgres"
+            network.app_sg, ec2.Port.tcp(5432), "Fargate tasks to Postgres"
         )
         self.db.connections.allow_from(
-            network.lambda_sg, ec2.Port.tcp(5432), "Lambdas -> Postgres"
+            network.lambda_sg, ec2.Port.tcp(5432), "Lambdas to Postgres"
         )
 
         # ------------------------------------------------------------------
