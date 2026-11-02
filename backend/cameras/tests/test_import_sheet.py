@@ -86,16 +86,15 @@ def test_import_creates_vetted_and_pending(tmp_path, fake_geocoder):
     assert abs(thirty.longitude - -90.0577) < 1e-6
 
     noted = cams["gsheet:4218-magazine-st"]
-    assert noted.status == CameraStatus.PENDING
-    assert noted.vetted_at is None
-    assert "not Project NOLA" in noted.reporter_notes
+    assert noted.status == CameraStatus.VETTED  # the sheet is the owner's data; notes don't veto
+    assert "not Project NOLA" in noted.admin_notes
     assert noted.host_business == "Theos / Theos magazine"
 
     assert cams["gsheet:610-tchoupitoulas-st"].host_business == "Kimberly A Meng DDS"
     corner = cams["gsheet:decatur-st-bienville-st"]
     assert corner.host_business == "(unnamed)"
-    assert corner.status == CameraStatus.PENDING  # Nominatim fallback hits need a human look
-    assert "nominatim" in corner.reporter_notes
+    assert corner.status == CameraStatus.VETTED
+    assert "nominatim" in corner.admin_notes  # fallback geocoder is recorded for review
     # "see MJW" and the address-less row were skipped and not geocoded.
     assert "see MJW" in " ".join(fake_geocoder)
     assert not Camera.objects.filter(host_business__contains="Back Lot").exists()

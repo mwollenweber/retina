@@ -7,11 +7,12 @@ Expected columns (header row, extra columns ignored):
 Each row is geocoded (Census, then Nominatim) and upserted as a camera with
 source=admin and a stable source_ref derived from the geocoder's canonical
 address, so
-re-running the command updates rather than duplicates. Rows with anything in
-Notes (the sheet uses it for "owner denies Project NOLA" caveats) land in the
-pending queue instead of being vetted, as do rows the Census geocoder missed
-and Nominatim resolved; rows without an address, or that neither geocoder can
-place, are reported and skipped.
+re-running the command updates rather than duplicates. The sheet is the
+owner's own field data, so every geocoded row is published (vetted). Anything
+in Notes (e.g. "owner denies Project NOLA") and the geocoder used are kept in
+admin_notes for review in the admin; --pending holds everything back instead.
+Rows without an address, or that neither geocoder can place, are reported and
+skipped.
 
 Usage:
     manage.py import_sheet --url 'https://docs.google.com/spreadsheets/d/<id>/export?format=csv&gid=0'
@@ -120,8 +121,8 @@ class Command(BaseCommand):
             label = " / ".join(r["names"]) or "(unnamed)"
             notes = list(r["notes"])
             if hit.geocoder != "census":
-                notes.append(f"Location from {hit.geocoder} fallback geocoder; verify before approving")
-            is_pending = opts["pending"] or bool(notes)
+                notes.append(f"Location from {hit.geocoder} fallback geocoder; worth a Street View check")
+            is_pending = opts["pending"]
             status = CameraStatus.PENDING if is_pending else CameraStatus.VETTED
             note_text = "; ".join(notes)
             self.stdout.write(
@@ -140,10 +141,10 @@ class Command(BaseCommand):
                 street_address=hit.matched_address[:255],
                 status=status,
                 vetted_at=None if is_pending else now,
-                reporter_notes=note_text,
                 admin_notes=(
                     f"Imported from spreadsheet rows {r['rows']}; "
                     f"geocoded {r['addresses']!r} with {hit.geocoder}."
+                    + (f" Sheet notes: {note_text}" if note_text else "")
                 ),
             )
             _, was_created = Camera.objects.update_or_create(
