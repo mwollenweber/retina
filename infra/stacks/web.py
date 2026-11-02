@@ -10,6 +10,8 @@ from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecr_assets as ecr_assets
 from aws_cdk import aws_ecs as ecs
 from aws_cdk import aws_elasticloadbalancingv2 as elbv2
+from aws_cdk import aws_events as events
+from aws_cdk import aws_events_targets as targets
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_secretsmanager as secretsmanager
@@ -227,6 +229,46 @@ class AppStack(Stack):
         # ------------------------------------------------------------------
         # Outputs for `aws ecs run-task` (migrate / createsuperuser)
         # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Scheduled sheet import: the Project NOLA Google Sheet is re-imported
+        # daily as a one-off task on this same task definition (05:30 UTC,
+        # before the RTCC sync at 06:30 and well before anyone in New Orleans
+        # is awake). -c sheetCsvUrl=... sets the CSV export URL.
+        # ------------------------------------------------------------------
+        sheet_csv_url = self.node.try_get_context("sheetCsvUrl")
+        if sheet_csv_url:
+            events.Rule(
+                self,
+                "ImportSheetDaily",
+                description="Re-import the Project NOLA spreadsheet and republish",
+                schedule=events.Schedule.cron(minute="30", hour="5"),
+                targets=[
+                    targets.EcsTask(
+                        cluster=self.cluster,
+                        task_definition=self.task_definition,
+                        task_count=1,
+                        subnet_selection=ec2.SubnetSelection(
+                            subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
+                        ),
+                        security_groups=[network.app_sg],
+                        container_overrides=[
+                            targets.ContainerOverride(
+                                container_name=CONTAINER_NAME,
+                                command=[
+                                    "python", "manage.py", "import_sheet",
+                                    "--url", sheet_csv_url, "--publish",
+                                ],
+                                environment=[
+                                    targets.TaskEnvironmentVariable(
+                                        name="SKIP_MIGRATE", value="1"
+                                    )
+                                ],
+                            )
+                        ],
+                    )
+                ],
+            )
+
         CfnOutput(self, "ClusterName", value=self.cluster.cluster_name)
         CfnOutput(self, "ServiceName", value=self.service.service_name)
         CfnOutput(
