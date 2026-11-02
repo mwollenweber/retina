@@ -23,7 +23,8 @@ infra/      AWS CDK (Python): VPC, RDS PostGIS, S3, CloudFront, ALB, Fargate, La
 3. `publish_geojson` (Lambda every 15 min, or the admin "Publish map data now" action) writes
    `data/cameras.geojson` of vetted cameras to S3. The map reads that file.
 4. `sync_traffic` (daily) upserts the City's traffic cameras from data.nola.gov.
-   `sync_osm` (every 6 h) upserts `man_made=surveillance` nodes in Orleans Parish.
+   `sync_rtcc` (daily) upserts the City's public safety (RTCC) cameras from its ArcGIS feature service.
+   `sync_osm` (every 6 h) upserts `man_made=surveillance` nodes within 10 miles of downtown.
    Neither job ever changes a camera's status after insert, so admin decisions stick.
 5. `push_osm` (daily, **dry run by default**) creates OSM nodes for vetted, field-reported
    Project NOLA cameras and records the node id back.

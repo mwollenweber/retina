@@ -166,7 +166,7 @@
       ["Operator", p.operator], ["Host", p.host_business], ["Address", p.street_address],
       ["Maker", [p.manufacturer, p.model_name].filter(Boolean).join(" ")],
       ["Mount", MOUNT[p.mount]], ["Facing", p.direction != null && p.direction !== "" ? p.direction + "°" : ""],
-      ["Source", { field_report: "Field report", admin: "Field report", city_traffic: "data.nola.gov", osm: "OpenStreetMap", records_request: "Public records" }[p.source]],
+      ["Source", { field_report: "Field report", admin: "Field report", city_traffic: "data.nola.gov", city_rtcc: "City RTCC camera map", osm: "OpenStreetMap", records_request: "Public records" }[p.source]],
       ["Vetted", p.vetted_at ? new Date(p.vetted_at).toLocaleDateString() : ""],
     ].filter(([, v]) => v);
     const gmaps = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;

@@ -15,6 +15,7 @@ lambdas/
   common/           db.py (connection), sync_log.py (source_sync context manager),
                     cameras.py (INSERT/UPDATE helpers), schema.py (table + choice constants)
   sync_traffic/     data.nola.gov traffic cameras -> camera
+  sync_rtcc/        City RTCC public safety camera layer (ArcGIS) -> camera
   sync_osm/         OpenStreetMap surveillance nodes (Overpass) -> camera
   publish_geojson/  vetted cameras + approved photos -> S3 GeoJSON
   push_osm/         field-surveyed cameras -> OpenStreetMap (dry run by default)
@@ -38,9 +39,24 @@ Each record with a `the_geom` point and a `camid` is upserted on
 * Rows with `active='No'` are kept and flagged `INACTIVE per city data` in `admin_notes`.
 * Rows without geometry are counted as seen and skipped.
 
+### `sync_rtcc` (`sync_rtcc.handler.handler`)
+Pages through the City's public safety camera layer, the `RTCC_Cameras`
+ArcGIS feature service behind the nolagis.maps.arcgis.com "City of New
+Orleans Public Safety Cameras" viewer (`f=geojson`, `resultOffset` paging,
+`exceededTransferLimit`). Each feature with an `OBJECTID` and a point is
+upserted on `(source='city_rtcc', source_ref=OBJECTID)`:
+
+* insert: `camera_type='nopd'`, `status='vetted'` (official data),
+  `operator='City of New Orleans Real-Time Crime Center'`,
+  `street_address=Unit` (e.g. `100 Blk of Royal`), `admin_notes` with
+  `Descr` / `PD_Distric` when present.
+* update: same rules as `sync_traffic`; `status` is never touched.
+* Override the query URL with `RTCC_QUERY_URL`.
+
 ### `sync_osm` (`sync_osm.handler.handler`)
-POSTs an Overpass query for `node["man_made"="surveillance"]` inside Orleans
-Parish (area `3601836428` = relation 1836428 + 3600000000) with the
+POSTs an Overpass query for `node["man_made"="surveillance"]` within 10 miles
+(`around:16093`) of downtown New Orleans, which reaches into Jefferson and
+St. Bernard parishes where most Flock plate readers are mapped, with the
 `User-Agent: retina-nola-camera-map/0.1 (+https://github.com/mwollenweber/retina)`
 header (Overpass returns 406 without one). Each node is upserted on `osm_id`:
 
@@ -97,6 +113,7 @@ keep this small, opt-in, and try the sandbox first
 | `DB_SSLMODE` | all | `require` | Only applied when building the DSN from the secret. |
 | `DB_CONNECT_TIMEOUT` | all | `10` | seconds |
 | `LOG_LEVEL` | all | `INFO` | |
+| `RTCC_QUERY_URL` | sync_rtcc | the `RTCC_Cameras/FeatureServer/0/query` URL | |
 | `SOCRATA_URL` | sync_traffic | `https://data.nola.gov/resource/te2d-4txp.json` | |
 | `SOCRATA_APP_TOKEN` | sync_traffic | – | Sent as `X-App-Token`; raises Socrata rate limits. |
 | `OVERPASS_URL` | sync_osm | `https://overpass-api.de/api/interpreter` | |
@@ -141,7 +158,7 @@ DATABASE_URL=... OSM_API_URL=https://master.apis.dev.openstreetmap.org/api/0.6 \
 ```bash
 cd lambdas
 PYTHON=~/.venvs/retina-lambdas/bin/python ./build.sh
-# -> build/sync_traffic.zip build/sync_osm.zip build/publish_geojson.zip build/push_osm.zip
+# -> build/sync_traffic.zip build/sync_rtcc.zip build/sync_osm.zip build/publish_geojson.zip build/push_osm.zip
 ```
 
 `build.sh` resolves `psycopg[binary]` and `requests` with
@@ -158,6 +175,7 @@ function at `build/<name>.zip` with handler `<name>.handler.handler`, runtime
 | Job | Schedule | Why |
 | --- | --- | --- |
 | `sync_traffic` | daily (e.g. 06:00 UTC) | The city dataset changes rarely. |
+| `sync_rtcc` | daily (06:30 UTC) | Same; the layer was last edited Jan 2026. |
 | `sync_osm` | every 6 hours | Overpass is a shared public service; be polite. |
 | `publish_geojson` | every 15 minutes, **and** after admin approve/reject actions | Cheap; 15 min bounds staleness; the backend can invoke it on demand (`lambda:InvokeFunction`). |
 | `push_osm` | manual, or daily in dry-run mode | Review the dry-run output, then run with `OSM_PUSH_ENABLED=true` by hand. |

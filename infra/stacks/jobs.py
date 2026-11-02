@@ -1,4 +1,4 @@
-"""JobsStack: scheduled Lambdas (sync_traffic, sync_osm, publish_geojson, push_osm).
+"""JobsStack: scheduled Lambdas (sync_traffic, sync_rtcc, sync_osm, publish_geojson, push_osm).
 
 Dependency note
 ---------------
@@ -75,6 +75,7 @@ class JobsStack(Stack):
         specs = [
             # name, timeout
             ("sync_traffic", Duration.minutes(5)),
+            ("sync_rtcc", Duration.minutes(5)),
             ("sync_osm", Duration.minutes(5)),
             ("publish_geojson", Duration.minutes(2)),
             ("push_osm", Duration.minutes(5)),
@@ -85,6 +86,7 @@ class JobsStack(Stack):
             )
 
         sync_traffic = self.functions["sync_traffic"]
+        sync_rtcc = self.functions["sync_rtcc"]
         sync_osm = self.functions["sync_osm"]
         publish = self.functions["publish_geojson"]
         push_osm = self.functions["push_osm"]
@@ -122,6 +124,11 @@ class JobsStack(Stack):
             "SyncTrafficDaily",
             sync_traffic,
             events.Schedule.cron(minute="0", hour="6"),
+        )
+        self._schedule(
+            "SyncRtccDaily",
+            sync_rtcc,
+            events.Schedule.cron(minute="30", hour="6"),
         )
         self._schedule(
             "SyncOsmEvery6h", sync_osm, events.Schedule.rate(Duration.hours(6))

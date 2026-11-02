@@ -98,7 +98,7 @@ class TestFetch:
         req = m.request_history[0]
         assert req.headers["User-Agent"] == "retina-nola-camera-map/0.1 (+https://github.com/mwollenweber/retina)"
         body = req.text
-        assert "3601836428" in body and "man_made" in body
+        assert "around" in body and "16093" in body and "man_made" in body
 
 
 class TestEndToEnd:

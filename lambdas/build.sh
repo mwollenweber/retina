@@ -20,7 +20,7 @@ BUILD="$HERE/build"
 PY="${PYTHON:-python3}"
 PY_VERSION="${LAMBDA_PY_VERSION:-3.13}"
 PLATFORMS="${LAMBDA_PLATFORMS:-manylinux_2_28_aarch64 manylinux2014_aarch64}"
-HANDLERS="${HANDLERS:-sync_traffic sync_osm publish_geojson push_osm}"
+HANDLERS="${HANDLERS:-sync_traffic sync_rtcc sync_osm publish_geojson push_osm}"
 
 rm -rf "$BUILD"
 mkdir -p "$BUILD"

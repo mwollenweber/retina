@@ -6,7 +6,7 @@ Everything Retina needs on AWS, as four CloudFormation stacks in one CDK app:
 |---|---|
 | `RetinaNetwork` | VPC (2 AZs; public / private / isolated subnets), a `t4g.micro` NAT **instance** (not a NAT Gateway), the internet-facing ALB and the shared security groups |
 | `RetinaData` | RDS PostgreSQL 16 (`db.t4g.micro`, 20 GB gp3), S3 `media` + `site` buckets, CloudFront distribution (OAC to S3, `/api/*` etc. to the ALB) |
-| `RetinaJobs` | Scheduled Lambdas `sync_traffic`, `sync_osm`, `publish_geojson`, `push_osm`, the OSM token secret |
+| `RetinaJobs` | Scheduled Lambdas `sync_traffic`, `sync_rtcc`, `sync_osm`, `publish_geojson`, `push_osm`, the OSM token secret |
 | `RetinaApp` | Django on ECS Fargate (1 x 0.25 vCPU / 512 MB, arm64), task definition reused for `migrate` / `createsuperuser` |
 
 Default region is `us-east-1`. Every resource is tagged `Project=retina`.

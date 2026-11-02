@@ -1,5 +1,5 @@
 """
-sync_osm: pull ``man_made=surveillance`` nodes inside Orleans Parish from
+sync_osm: pull ``man_made=surveillance`` nodes within 10 miles of downtown New Orleans from
 Overpass and upsert into ``camera`` keyed on ``osm_id``.
 
 Rules:
@@ -31,12 +31,14 @@ SOURCE = CameraSource.OSM
 DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 USER_AGENT = "retina-nola-camera-map/0.1 (+https://github.com/mwollenweber/retina)"
 
-# Orleans Parish = OSM relation 1836428; Overpass area id = relation id + 3600000000.
-ORLEANS_PARISH_AREA = 3601836428
+# Everything within 10 miles (16 km) of downtown New Orleans. That reaches into
+# Jefferson and St. Bernard parishes, where most Flock plate readers sit, and
+# matches the scope third-party "Flock camera" maps draw from the same OSM data.
+CENTER_LAT, CENTER_LNG = 29.9511, -90.0715
+RADIUS_M = 16_093
 OVERPASS_QUERY = f"""
 [out:json][timeout:90];
-area({ORLEANS_PARISH_AREA})->.a;
-node["man_made"="surveillance"](area.a);
+node["man_made"="surveillance"](around:{RADIUS_M},{CENTER_LAT},{CENTER_LNG});
 out body;
 """
 

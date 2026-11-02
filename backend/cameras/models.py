@@ -34,6 +34,7 @@ class CameraSource(models.TextChoices):
     FIELD_REPORT = "field_report", "Field report (public submission)"
     ADMIN = "admin", "Entered by admin"
     CITY_TRAFFIC = "city_traffic", "data.nola.gov traffic cameras"
+    CITY_RTCC = "city_rtcc", "City public safety (RTCC) camera map"
     OSM = "osm", "OpenStreetMap"
     RECORDS_REQUEST = "records_request", "Public records request"
 

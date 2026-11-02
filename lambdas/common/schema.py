@@ -42,10 +42,11 @@ class CameraSource:
     FIELD_REPORT = "field_report"
     ADMIN = "admin"
     CITY_TRAFFIC = "city_traffic"
+    CITY_RTCC = "city_rtcc"
     OSM = "osm"
     RECORDS_REQUEST = "records_request"
 
-    ALL = (FIELD_REPORT, ADMIN, CITY_TRAFFIC, OSM, RECORDS_REQUEST)
+    ALL = (FIELD_REPORT, ADMIN, CITY_TRAFFIC, CITY_RTCC, OSM, RECORDS_REQUEST)
 
 
 # --- Camera.mount (Mount) ---------------------------------------------------

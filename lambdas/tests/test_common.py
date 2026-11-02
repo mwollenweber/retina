@@ -14,7 +14,7 @@ class TestSchema:
         assert CAMERA_TABLE == "camera"
         assert set(CameraType.ALL) == {"project_nola", "nopd", "traffic", "alpr", "private", "unknown"}
         assert set(CameraStatus.ALL) == {"pending", "vetted", "rejected"}
-        assert set(CameraSource.ALL) == {"field_report", "admin", "city_traffic", "osm", "records_request"}
+        assert set(CameraSource.ALL) == {"field_report", "admin", "city_traffic", "city_rtcc", "osm", "records_request"}
         assert set(Mount.ALL) == {"pole", "building", "traffic_signal", "other", ""}
         assert set(RunStatus.ALL) == {"running", "succeeded", "failed"}
 
