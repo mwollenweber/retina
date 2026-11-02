@@ -100,7 +100,7 @@ class DataStack(Stack):
         # CloudFront
         #   /            -> site bucket (OAC), index.html
         #   /media/*     -> media bucket (OAC), long cache
-        #   /api/*, /admin/*, /submit*, /static/* -> ALB (Django), no cache
+        #   /api/*, /admin/*, /static/* -> ALB (Django), no cache; submit.html is static
         #
         # NOTE on /media/*: CloudFront forwards the full URI path to S3, so an
         # object requested as https://<cf>/media/photos/x.jpg is fetched as key
@@ -191,7 +191,6 @@ class DataStack(Stack):
                 ),
                 "/api/*": django_behavior,
                 "/admin/*": django_behavior,
-                "/submit*": django_behavior,
                 "/static/*": django_behavior,
             },
             # S3+OAC returns 403 for missing keys; surface it as a 404.
