@@ -17,7 +17,8 @@ COPY . .
 RUN DJANGO_SETTINGS_MODULE=retina.settings.production DJANGO_SECRET_KEY=build \
     python manage.py collectstatic --noinput
 
-RUN useradd -r -u 10001 app && chown -R app /app
+# -d /app: gunicorn 23 writes its control socket under $HOME
+RUN useradd -r -u 10001 -d /app app && chown -R app /app
 USER app
 
 EXPOSE 8000
