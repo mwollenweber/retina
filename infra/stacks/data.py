@@ -108,21 +108,24 @@ class DataStack(Stack):
         # "media/" prefix (django-storages: AWS_LOCATION = "media"). MEDIA_URL
         # is exported as https://<cf>/media/ to match.
         # ------------------------------------------------------------------
-        domain_name = self.node.try_get_context("domainName")
+        # -c domainNames=a.example.org,b.example.org (first is canonical) and
+        # -c certificateArn=... (ACM, us-east-1, must cover every name).
+        raw_names = self.node.try_get_context("domainNames") or self.node.try_get_context("domainName") or ""
+        self.domain_names: list[str] = [n.strip() for n in raw_names.split(",") if n.strip()]
         certificate_arn = self.node.try_get_context("certificateArn")
         certificate = None
         domain_names = None
-        if domain_name and certificate_arn:
+        if self.domain_names and certificate_arn:
             # Cert must be in us-east-1 for CloudFront.
             certificate = acm.Certificate.from_certificate_arn(
                 self, "Cert", certificate_arn
             )
-            domain_names = [domain_name]
-        elif domain_name or certificate_arn:
+            domain_names = self.domain_names
+        elif self.domain_names or certificate_arn:
             raise ValueError(
-                "Set both -c domainName=... and -c certificateArn=..., or neither."
+                "Set both -c domainNames=... and -c certificateArn=..., or neither."
             )
-        self.domain_name = domain_name
+        self.domain_name = self.domain_names[0] if self.domain_names else None
 
         media_headers = cloudfront.ResponseHeadersPolicy(
             self,
@@ -205,7 +208,7 @@ class DataStack(Stack):
         )
 
         # Public hostname of the site (custom domain if configured).
-        self.public_domain = domain_name or self.distribution.distribution_domain_name
+        self.public_domain = self.domain_name or self.distribution.distribution_domain_name
 
         # ------------------------------------------------------------------
         # Exports

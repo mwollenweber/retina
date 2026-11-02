@@ -102,8 +102,8 @@ class AppStack(Stack):
         allowed_hosts = [cf_domain, network.alb.load_balancer_dns_name]
         csrf_origins = [f"https://{cf_domain}"]
         if data.domain_name:
-            allowed_hosts.insert(0, data.domain_name)
-            csrf_origins.insert(0, f"https://{data.domain_name}")
+            allowed_hosts[0:0] = data.domain_names
+            csrf_origins[0:0] = [f"https://{d}" for d in data.domain_names]
 
         environment = {
             "DJANGO_SETTINGS_MODULE": "retina.settings.production",
