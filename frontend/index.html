@@ -20,14 +20,16 @@
 
   <aside class="panel" id="panel">
     <div class="panel-head">
-      <strong>Filters</strong>
+      <button id="panel-toggle" class="panel-toggle" type="button" aria-expanded="true" aria-controls="panel-body"><strong>Filters</strong> <span class="chev" aria-hidden="true">▾</span></button>
       <span id="count" class="count">loading</span>
     </div>
+    <div id="panel-body">
     <div id="type-filters" class="filters"></div>
     <label class="check"><input type="checkbox" id="f-fr"> Facial recognition only</label>
     <label class="check"><input type="checkbox" id="f-photos"> With photos only</label>
     <div class="panel-foot">
       <small id="generated"></small>
+    </div>
     </div>
   </aside>
 

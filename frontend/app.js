@@ -35,6 +35,38 @@
   document.getElementById("f-photos").addEventListener("change", (e) => { state.photosOnly = e.target.checked; applyFilters(); });
   document.getElementById("about-btn").addEventListener("click", () => document.getElementById("about").showModal());
 
+  // Filters panel collapses on phones so the map is visible by default.
+  const panel = document.getElementById("panel");
+  const panelToggle = document.getElementById("panel-toggle");
+  function setPanel(open) {
+    panel.classList.toggle("collapsed", !open);
+    panelToggle.setAttribute("aria-expanded", String(open));
+  }
+  panelToggle.addEventListener("click", () => setPanel(panel.classList.contains("collapsed")));
+  setPanel(!window.matchMedia("(max-width: 600px)").matches);
+
+  // --- capability check ----------------------------------------------------
+  // MapLibre GL 5 needs WebGL2. iOS Lockdown Mode, some in-app browsers, and
+  // very old devices don't have it; say so instead of showing a blank box.
+  function hasWebGL2() {
+    try {
+      const c = document.createElement("canvas");
+      return !!(c.getContext("webgl2") || c.getContext("webgl2", { failIfMajorPerformanceCaveat: false }));
+    } catch (_) { return false; }
+  }
+  function mapNotice(html) {
+    const el = document.createElement("div");
+    el.className = "map-notice";
+    el.innerHTML = `<div>${html}</div>`;
+    document.getElementById("map").appendChild(el);
+  }
+  if (!hasWebGL2()) {
+    mapNotice(`<p><strong>This browser can't draw the map.</strong></p>
+      <p>The map needs WebGL, which is off in iOS Lockdown Mode and in some in-app browsers. Open this page in Safari or Chrome, or <a href="api/cameras/?camera_type=project_nola">browse the camera list</a> instead.</p>`);
+    document.getElementById("count").textContent = "map unavailable";
+    return;
+  }
+
   // --- map -----------------------------------------------------------------
   const map = new maplibregl.Map({
     container: "map",
@@ -45,6 +77,15 @@
     maxBounds: CFG.MAX_BOUNDS,
     hash: true,
     attributionControl: { compact: true },
+  });
+  let noticed = false;
+  map.on("error", (e) => {
+    // One notice for a style/tile failure (network blocked, CDN down), not a
+    // flood for every missing glyph.
+    const msg = e && e.error && e.error.message ? e.error.message : "";
+    if (noticed || !/style|tile|fetch|load/i.test(msg)) return;
+    noticed = true;
+    mapNotice(`<p><strong>The map tiles didn't load.</strong></p><p>${esc(msg)}</p><p>Check your connection or content blocker and reload.</p>`);
   });
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
   map.addControl(new maplibregl.GeolocateControl({ positionOptions: { enableHighAccuracy: true }, trackUserLocation: false }), "top-right");
