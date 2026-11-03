@@ -33,7 +33,9 @@
   }
   document.getElementById("f-fr").addEventListener("change", (e) => { state.frOnly = e.target.checked; applyFilters(); });
   document.getElementById("f-photos").addEventListener("change", (e) => { state.photosOnly = e.target.checked; applyFilters(); });
-  document.getElementById("about-btn").addEventListener("click", () => document.getElementById("about").showModal());
+  for (const id of ["about-btn", "about-link"]) {
+    document.getElementById(id).addEventListener("click", () => document.getElementById("about").showModal());
+  }
 
   // Filters panel collapses on phones so the map is visible by default.
   const panel = document.getElementById("panel");
