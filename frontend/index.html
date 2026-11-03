@@ -20,14 +20,17 @@
 
   <aside class="panel" id="panel">
     <div class="panel-head">
-      <strong>Filters</strong>
+      <button id="panel-toggle" class="panel-toggle" type="button" aria-expanded="true" aria-controls="panel-body"><strong>Filters</strong> <span class="chev" aria-hidden="true">▾</span></button>
       <span id="count" class="count">loading</span>
     </div>
+    <div id="panel-body">
     <div id="type-filters" class="filters"></div>
     <label class="check"><input type="checkbox" id="f-fr"> Facial recognition only</label>
     <label class="check"><input type="checkbox" id="f-photos"> With photos only</label>
     <div class="panel-foot">
+      <small class="disclaimer">Locations are from public records or best effort; Project NOLA points are suspected cameras. <button type="button" class="linklike" id="about-link">Details</button></small>
       <small id="generated"></small>
+    </div>
     </div>
   </aside>
 
@@ -37,7 +40,9 @@
     <h2>About this map</h2>
     <p>Retina is a project of the <a href="https://perdidoinstitute.com" target="_blank" rel="noopener">Perdido Institute</a>: a self-hosted, community-collected map of surveillance cameras in New Orleans. The focus is Project NOLA, the private camera network that has fed live facial recognition alerts to police.</p>
     <p>Sources: field reports from the public (each reviewed with photos before it appears), the City of New Orleans traffic camera dataset on data.nola.gov, the City's public safety (RTCC) camera map on nolagis.maps.arcgis.com, and OpenStreetMap.</p>
-    <p>Each point is a best-effort placement. Use the Street View link in a popup to verify. Found a mistake? Use <em>Report a camera</em> and describe the correction.</p>
+    <h3>Disclaimer</h3>
+    <p>Camera locations come from public records or are best-effort placements, and may be out of date or wrong. Most Project NOLA points are <strong>suspected</strong> cameras: a camera was seen at or near the address, but its network and operator are not confirmed unless a popup says so. Nothing here is an official record, and it should not be relied on for any legal, safety, or investigative purpose.</p>
+    <p>Use the Street View link in a popup to check a location yourself. Found a mistake? Use <em>Report a camera</em> and describe the correction.</p>
     <p>Questions, corrections, or records to share: <a href="mailto:retina@perdidoinstitute.com">retina@perdidoinstitute.com</a>.</p>
     <form method="dialog"><button class="btn">Close</button></form>
   </dialog>
