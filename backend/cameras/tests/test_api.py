@@ -3,6 +3,7 @@ import io
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from cameras.api import ReportThrottle
 from cameras.models import Camera, CameraStatus, PhotoStatus
 from cameras.tests.conftest import make_jpeg
 
@@ -140,3 +141,13 @@ def test_healthz_ignores_host_header(client, settings):
     settings.ALLOWED_HOSTS = ["example.com"]
     assert client.get("/healthz/", HTTP_HOST="10.0.1.23:8000").status_code == 200
     assert client.get("/api/cameras/", HTTP_HOST="10.0.1.23:8000").status_code == 400
+
+
+def test_throttle_ignores_spoofed_forwarded_for(rf, settings):
+    """Behind CloudFront + ALB the client is second from the right in X-Forwarded-For."""
+    settings.REST_FRAMEWORK = {**settings.REST_FRAMEWORK, "NUM_PROXIES": 2}
+    idents = {
+        ReportThrottle().get_ident(rf.post(REPORTS, HTTP_X_FORWARDED_FOR=f"{spoof}203.0.113.9, 130.176.0.1"))
+        for spoof in ("", "1.1.1.1, ", "2.2.2.2, 3.3.3.3, ")
+    }
+    assert idents == {"203.0.113.9"}

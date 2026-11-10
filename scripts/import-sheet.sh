@@ -5,10 +5,20 @@
 # the deployed web image, waits for it, and prints its log. Idempotent: rows
 # already imported are updated in place, new rows are added.
 #
+# The sheet's CSV export URL comes from $SHEET_URL, or else from `sheetCsvUrl`
+# in infra/deploy.local.json (not in git; see infra/deploy.example.json).
+#
 # Usage: scripts/import-sheet.sh [extra import_sheet args, e.g. --dry-run]
 set -euo pipefail
 
-SHEET_URL="${SHEET_URL:-https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=0}"
+LOCAL_CONTEXT="$(dirname "$0")/../infra/deploy.local.json"
+if [ -z "${SHEET_URL:-}" ] && [ -f "$LOCAL_CONTEXT" ]; then
+  SHEET_URL=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sheetCsvUrl", ""))' "$LOCAL_CONTEXT")
+fi
+if [ -z "${SHEET_URL:-}" ]; then
+  echo "no sheet URL: set SHEET_URL or sheetCsvUrl in infra/deploy.local.json" >&2
+  exit 2
+fi
 STACK="${STACK:-RetinaApp}"
 
 out() { aws cloudformation describe-stacks --stack-name "$STACK" \
