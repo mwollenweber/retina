@@ -1,0 +1,5 @@
+{
+  "domainNames": "map.example.org,map.example.com",
+  "certificateArn": "arn:aws:acm:us-east-1:123456789012:certificate/00000000-0000-0000-0000-000000000000",
+  "sheetCsvUrl": "https://docs.google.com/spreadsheets/d/<sheet id>/export?format=csv&gid=0"
+}

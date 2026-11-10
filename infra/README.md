@@ -45,13 +45,18 @@ alias cdk='npx --yes aws-cdk@2'
 
 ## Context parameters
 
-Set with `-c key=value` or in `cdk.json` → `context`:
+Set with `-c key=value` or in `cdk.json` → `context`. Values that identify a
+particular deployment (`domainNames`, `certificateArn`, `sheetCsvUrl`) go in
+`infra/deploy.local.json` instead, which is not in git: copy
+`deploy.example.json` and fill it in. Deploying without that file removes the
+custom domains and the scheduled sheet import.
 
 | Key | Default | Purpose |
 |---|---|---|
 | `cloudfrontPrefixListId` | `pl-3b927c52` (us-east-1) | Managed prefix list `com.amazonaws.global.cloudfront.origin-facing`; the ALB only accepts port 80 from it. Other regions: `aws ec2 describe-managed-prefix-lists --filters Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing` |
 | `availabilityZones` | `<region>a,<region>b` | AZs for the VPC (avoids a credentialed lookup at synth) |
 | `domainNames` + `certificateArn` | unset | Comma-separated custom domains for CloudFront; the first is canonical (used for MEDIA_URL). The ACM cert must be in `us-east-1` and cover every name. Both or neither. |
+| `sheetCsvUrl` | unset | CSV export URL of the Project NOLA Google Sheet; when set, the sheet is re-imported daily. |
 
 ## Bootstrap, synth, deploy
 

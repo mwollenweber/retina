@@ -26,6 +26,8 @@ backend/db.sqlite3*
 infra/cdk.out/
 infra/.cdk.staging/
 infra/cdk.context.json
+infra/cdk-outputs.json
+infra/deploy.local.json
 
 # Lambda build artifacts
 lambdas/build/

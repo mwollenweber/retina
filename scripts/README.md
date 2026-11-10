@@ -56,9 +56,10 @@ up. Fixups apply by row name and leave the sheet alone. They ship in the
 backend image, so a fixup change needs `cdk deploy RetinaApp` before it takes
 effect.
 
-The sheet URL lives in `infra/cdk.json` as `sheetCsvUrl` (for the schedule) and
-as the default in `import-sheet.sh` (for manual runs). Change both if the sheet
-moves.
+The sheet URL lives in `infra/deploy.local.json` as `sheetCsvUrl`, which is not
+in git (see `infra/deploy.example.json`). The schedule and `import-sheet.sh`
+both read it from there; `SHEET_URL` overrides it for a manual run. If the
+sheet moves, change it and `cdk deploy RetinaApp`.
 
 ## Checking on a job
 

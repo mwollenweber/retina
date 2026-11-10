@@ -10,6 +10,11 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_SSL_REDIRECT = False  # CloudFront enforces HTTPS; the ALB health check is plain HTTP.
 
+# Throttles key on the client IP. CloudFront and the ALB each append one address
+# to X-Forwarded-For, so the client is second from the right; anything further
+# left is whatever the sender typed and must not pick the throttle bucket.
+REST_FRAMEWORK["NUM_PROXIES"] = int(env("NUM_PROXIES", "2"))  # noqa: F405
+
 # Photos go to S3 and are served through CloudFront at MEDIA_URL.
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
 if AWS_STORAGE_BUCKET_NAME:
