@@ -7,6 +7,7 @@ from .base import *  # noqa: F401,F403
 from .base import BASE_DIR
 
 DEBUG = False
+SECRET_KEY = "test-only"
 ALLOWED_HOSTS = ["*"]
 
 DATABASES = {
