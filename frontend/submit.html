@@ -146,8 +146,15 @@
           e.target.reset(); photosEl.innerHTML = ""; addPhotoRow(); if (marker) { marker.remove(); marker = null; }
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else {
-          const msg = typeof body === "object" ? Object.entries(body).map(([k, v]) => (k === "non_field_errors" ? "" : k + ": ") + [].concat(v).join(" ")).join("<br>") : "Submission failed.";
-          result.innerHTML = '<div class="msg err">' + (msg || "Submission failed.") + "</div>";
+          // Server messages can echo what was typed, so they go in as text, never as HTML.
+          const lines = typeof body === "object" ? Object.entries(body).map(([k, v]) => (k === "non_field_errors" ? "" : k + ": ") + [].concat(v).join(" ")) : [];
+          const box = document.createElement("div");
+          box.className = "msg err";
+          (lines.length ? lines : ["Submission failed."]).forEach((line, i) => {
+            if (i) box.appendChild(document.createElement("br"));
+            box.appendChild(document.createTextNode(line));
+          });
+          result.replaceChildren(box);
         }
       } catch (err) {
         result.innerHTML = '<div class="msg err">Network error. Please try again.</div>';

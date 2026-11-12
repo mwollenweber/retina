@@ -27,7 +27,8 @@ def env_list(name, default=""):
     return [x.strip() for x in os.environ.get(name, default).split(",") if x.strip()]
 
 
-SECRET_KEY = env("DJANGO_SECRET_KEY", "dev-only-insecure-key-change-me")
+# No fallback here: development and test supply their own, production refuses to start without one.
+SECRET_KEY = env("DJANGO_SECRET_KEY", "")
 DEBUG = False
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")

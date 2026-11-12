@@ -1,7 +1,13 @@
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F401,F403
-from .base import env, env_bool
+from .base import SECRET_KEY, env, env_bool
 
 DEBUG = env_bool("DJANGO_DEBUG", False)
+
+# The key signs sessions and CSRF tokens; a guessable one lets anyone forge an admin session.
+if not SECRET_KEY:
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set in production")
 
 # Behind CloudFront -> ALB (HTTP). Trust the forwarded proto so Django builds https URLs.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
