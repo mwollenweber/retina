@@ -5,7 +5,10 @@ Static site: MapLibre GL JS, vanilla JS, no build step.
 - `index.html` / `app.js`: the map. Reads `data/cameras.geojson` (published by the backend or the
   `publish_geojson` Lambda) and falls back to `API_BASE/api/cameras/`.
 - `submit.html`: public report form. Posts multipart to `API_BASE/api/reports/`.
-- `config.js`: per-deployment settings (data URL, API origin, basemap style).
+- `config.js`: per-deployment settings (data URL, API origin, basemap style, GA measurement ID).
+- `analytics.js`: loads Google Analytics 4 on the map page when `GA_MEASUREMENT_ID` is set, with
+  Google signals and ad personalization off. `submit.html` does not load it, so reporters are not
+  tracked. Set `GA_MEASUREMENT_ID: ""` to disable analytics for a deployment.
 
 ## Local dev
 
