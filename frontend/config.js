@@ -15,4 +15,7 @@ window.RETINA_CONFIG = {
   MIN_ZOOM: 9,
   MAX_BOUNDS: [[-90.45, 29.70], [-89.45, 30.30]],
   CORRECTION_EMAIL: "",
+  // Google Analytics 4 measurement ID (Perdido Institute > Retina property).
+  // Used by analytics.js on the map page only. Empty string disables it.
+  GA_MEASUREMENT_ID: "G-MVT73G4873",
 };
